@@ -1,7 +1,3 @@
-// pages/verify.js
-
-import fs from 'fs';
-import path from 'path';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
