@@ -6,14 +6,23 @@ const SECRET_KEY = process.env.SECRET_KEY;
 
 export default async function handler(req, res) {
   const { token } = req.query;
+  const { fingerprint } = req.body || {};
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: '❌ Metode tidak diizinkan. Gunakan POST.' });
+  }
 
   if (!token) {
     return res.status(400).json({ message: '❌ Token tidak ditemukan.' });
   }
 
+  if (!fingerprint) {
+    return res.status(400).json({ message: '❌ Fingerprint tidak ditemukan.' });
+  }
+
   try {
-    // Cek apakah IP menggunakan VPN (offline method)
     const isUsingVpn = await isVpn(ip);
     if (isUsingVpn) {
       return res.json({ message: '🚫 VPN/Proxy terdeteksi. Silakan nonaktifkan VPN dan coba lagi.' });
@@ -34,7 +43,9 @@ export default async function handler(req, res) {
     }
 
     const sameIpUsed = await tokens.findOne({ ip, used: true });
-    if (sameIpUsed) {
+    const sameFpUsed = await tokens.findOne({ fingerprint, used: true });
+
+    if (sameIpUsed || sameFpUsed) {
       await tokens.updateOne(
         { token },
         {
@@ -42,6 +53,8 @@ export default async function handler(req, res) {
             used: true,
             valid: false,
             ip,
+            fingerprint,
+            userAgent,
             rejectedAt: new Date()
           }
         }
@@ -56,6 +69,8 @@ export default async function handler(req, res) {
           used: true,
           valid: true,
           ip,
+          fingerprint,
+          userAgent,
           usedAt: new Date()
         }
       }
@@ -71,7 +86,8 @@ export default async function handler(req, res) {
         userId: tokenData.userId,
         referrerId: tokenData.referrerId,
         token,
-        ip
+        ip,
+        fingerprint
       })
     });
 
@@ -81,4 +97,4 @@ export default async function handler(req, res) {
     console.error(error);
     return res.status(500).json({ message: '❌ Internal server error.' });
   }
-}
+} ini dah bener kan? 
