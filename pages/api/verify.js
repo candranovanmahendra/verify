@@ -1,5 +1,6 @@
 // pages/api/verify.js
-import clientPromise from '@/lib/mongodb';
+import clientPromise from '../../lib/mongodb';
+
 
 const BOT_API = 'https://your-bot-api.com/verify';
 const SECRET_KEY = process.env.SECRET_KEY;
