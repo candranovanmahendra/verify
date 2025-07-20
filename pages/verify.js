@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 export default function VerifyPage() {
   const router = useRouter();
@@ -10,9 +11,25 @@ export default function VerifyPage() {
     if (!token) return;
 
     async function verifyToken() {
-      const res = await fetch(`/api/verify?token=${token}`);
-      const data = await res.json();
-      setMessage(data.message);
+      try {
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        const fingerprint = result.visitorId;
+
+        const res = await fetch(`/api/verify?token=${token}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ fingerprint }),
+        });
+
+        const data = await res.json();
+        setMessage(data.message);
+      } catch (err) {
+        console.error(err);
+        setMessage("❌ Gagal memverifikasi. Coba lagi nanti.");
+      }
     }
 
     verifyToken();
