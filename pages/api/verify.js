@@ -25,9 +25,9 @@ export default async function handler(req, res) {
     // Jika token sudah digunakan
     if (tokenData.used) {
       if (tokenData.valid === false) {
-        return res.json({ message: '🚫 Verifikasi sebelumnya ditolak karena IP kamu sudah dipakai.' });
+        return res.json({ message: '🚫 Verifikasi referral gagal atau ditolak, klik konfirmasi verifikasi di bot.' });
       }
-      return res.json({ message: '⚠️ Token sudah digunakan sebelumnya.' });
+      return res.json({ message: '🚫 Verifikasi referral gagal atau ditolak, klik konfirmasi verifikasi di bot.' });
     }
 
     // Cek apakah IP sudah pernah dipakai verifikasi
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
           }
         }
       );
-      return res.json({ message: '🚫 IP kamu sudah pernah digunakan. Verifikasi ditolak.' });
+      return res.json({ message: '🚫 Verifikasi referral gagal atau ditolak, klik konfirmasi verifikasi di bot.' });
     }
 
     // Tandai token ini sebagai valid dan digunakan
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       })
     });
 
-    return res.json({ message: '✅ Verifikasi berhasil! Bonus referral dikirim!' });
+    return res.json({ message: '✅ Verifikasi berhasil! klik konfirmasi verifikasi di bot.' });
 
   } catch (error) {
     console.error(error);
