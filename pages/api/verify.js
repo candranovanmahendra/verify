@@ -1,19 +1,26 @@
 import clientPromise from '../../lib/mongodb';
+import { isVpn } from 'https://cdn.jsdelivr.net/gh/josephrocca/is-vpn@v0.0.2/mod.js';
 
 const BOT_API = 'https://verify-three-rosy.vercel.app/verify';
 const SECRET_KEY = process.env.SECRET_KEY;
 
 export default async function handler(req, res) {
   const { token } = req.query;
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
 
   if (!token) {
     return res.status(400).json({ message: '❌ Token tidak ditemukan.' });
   }
 
   try {
+    // Cek apakah IP menggunakan VPN (offline method)
+    const isUsingVpn = await isVpn(ip);
+    if (isUsingVpn) {
+      return res.json({ message: '🚫 VPN/Proxy terdeteksi. Silakan nonaktifkan VPN dan coba lagi.' });
+    }
+
     const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB); // Ganti sesuai nama DB kamu
+    const db = client.db(process.env.MONGODB_DB);
     const tokens = db.collection('referral_tokens');
 
     const tokenData = await tokens.findOne({ token });
@@ -22,18 +29,12 @@ export default async function handler(req, res) {
       return res.json({ message: '❌ Token tidak valid.' });
     }
 
-    // Jika token sudah digunakan
     if (tokenData.used) {
-      if (tokenData.valid === false) {
-        return res.json({ message: '🚫 Verifikasi referral gagal atau ditolak, klik konfirmasi verifikasi di bot.' });
-      }
       return res.json({ message: '🚫 Verifikasi referral gagal atau ditolak, klik konfirmasi verifikasi di bot.' });
     }
 
-    // Cek apakah IP sudah pernah dipakai verifikasi
     const sameIpUsed = await tokens.findOne({ ip, used: true });
     if (sameIpUsed) {
-      // Tandai token ini sebagai ditolak
       await tokens.updateOne(
         { token },
         {
@@ -48,7 +49,6 @@ export default async function handler(req, res) {
       return res.json({ message: '🚫 Verifikasi referral gagal atau ditolak, klik konfirmasi verifikasi di bot.' });
     }
 
-    // Tandai token ini sebagai valid dan digunakan
     await tokens.updateOne(
       { token },
       {
@@ -61,7 +61,6 @@ export default async function handler(req, res) {
       }
     );
 
-    // Kirim ke bot untuk proses bonus
     await fetch(BOT_API, {
       method: 'POST',
       headers: {
