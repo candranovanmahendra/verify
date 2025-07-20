@@ -1,6 +1,4 @@
-// pages/api/verify.js
 import clientPromise from '../../lib/mongodb';
-
 
 const BOT_API = 'https://verify-three-rosy.vercel.app/verify';
 const SECRET_KEY = process.env.SECRET_KEY;
@@ -28,19 +26,34 @@ export default async function handler(req, res) {
 
     const sameIpUsed = await tokens.findOne({ ip, used: true });
     if (sameIpUsed) {
-      return res.json({ message: '🚫 Kamu sudah pernah verifikasi sebelumnya (IP Terdeteksi).' });
+      // Tandai token ini sebagai tidak valid
+      await tokens.updateOne(
+        { token },
+        {
+          $set: {
+            valid: false,
+            ip,
+            rejectedAt: new Date(),
+          }
+        }
+      );
+      return res.json({ message: '🚫 IP kamu sudah pernah digunakan. Verifikasi ditolak.' });
     }
 
-    await tokens.updateOne({ token }, {
-  $set: {
-    used: true,
-    userId: tokenData.userId, // ini penting
-    ip,
-    usedAt: new Date()
-  }
-});
+    // Tandai token sebagai valid & sudah digunakan
+    await tokens.updateOne(
+      { token },
+      {
+        $set: {
+          used: true,
+          valid: true,
+          ip,
+          usedAt: new Date(),
+        }
+      }
+    );
 
-
+    // Kirim ke bot
     await fetch(BOT_API, {
       method: 'POST',
       headers: {
