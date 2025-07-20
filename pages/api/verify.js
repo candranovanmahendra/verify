@@ -1,7 +1,7 @@
 import clientPromise from '../../lib/mongodb';
 import { isVpn } from "../../lib/isVpn";
 
-const BOT_API = 'https://verify-three-rosy.vercel.app/verify';
+const BOT_API = 'https://verify-three-rosy.vercel.app/verify'; // optional jika perlu
 const SECRET_KEY = process.env.SECRET_KEY;
 
 export default async function handler(req, res) {
@@ -38,10 +38,12 @@ export default async function handler(req, res) {
       return res.json({ message: '❌ Token tidak valid.' });
     }
 
-    if (tokenData.used) {
-      return res.json({ message: '🚫 Verifikasi referral gagal atau ditolak, klik konfirmasi verifikasi di bot.' });
+    // ✅ Jika sudah valid, tidak perlu proses ulang
+    if (tokenData.valid === true) {
+      return res.json({ message: '✅ Verifikasi sudah dilakukan. Klik konfirmasi di bot.' });
     }
 
+    // ❌ Blokir jika fingerprint atau IP sudah pernah dipakai
     const sameIpUsed = await tokens.findOne({ ip, used: true });
     const sameFpUsed = await tokens.findOne({ fingerprint, used: true });
 
@@ -50,7 +52,6 @@ export default async function handler(req, res) {
         { token },
         {
           $set: {
-            used: true,
             valid: false,
             ip,
             fingerprint,
@@ -62,11 +63,11 @@ export default async function handler(req, res) {
       return res.json({ message: '🚫 Verifikasi referral gagal atau ditolak, klik konfirmasi verifikasi di bot.' });
     }
 
+    // ✅ Set token sebagai valid (bonus akan diproses oleh bot)
     await tokens.updateOne(
       { token },
       {
         $set: {
-          used: true,
           valid: true,
           ip,
           fingerprint,
@@ -76,25 +77,10 @@ export default async function handler(req, res) {
       }
     );
 
-    await fetch(BOT_API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': SECRET_KEY
-      },
-      body: JSON.stringify({
-        userId: tokenData.userId,
-        referrerId: tokenData.referrerId,
-        token,
-        ip,
-        fingerprint
-      })
-    });
-
-    return res.json({ message: '✅ Verifikasi berhasil! klik konfirmasi verifikasi di bot.' });
+    return res.json({ message: '✅ Verifikasi berhasil! Klik konfirmasi verifikasi di bot.' });
 
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: '❌ Internal server error.' });
   }
-} 
+}
