@@ -56,7 +56,8 @@ export default async function handler(req, res) {
             ip,
             fingerprint,
             userAgent,
-            rejectedAt: new Date()
+            rejectedAt: new Date(),
+            pernahBuka: true
           }
         }
       );
@@ -72,7 +73,8 @@ export default async function handler(req, res) {
           ip,
           fingerprint,
           userAgent,
-          usedAt: new Date()
+          usedAt: new Date(),
+          pernahBuka: true
         }
       }
     );
