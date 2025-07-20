@@ -2,7 +2,7 @@
 import clientPromise from '../../lib/mongodb';
 
 
-const BOT_API = 'https://your-bot-api.com/verify';
+const BOT_API = 'https://verify-three-rosy.vercel.app/verify';
 const SECRET_KEY = process.env.SECRET_KEY;
 
 export default async function handler(req, res) {
