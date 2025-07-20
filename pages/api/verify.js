@@ -32,8 +32,14 @@ export default async function handler(req, res) {
     }
 
     await tokens.updateOne({ token }, {
-      $set: { used: true, ip, usedAt: new Date() }
-    });
+  $set: {
+    used: true,
+    userId: tokenData.userId, // ini penting
+    ip,
+    usedAt: new Date()
+  }
+});
+
 
     await fetch(BOT_API, {
       method: 'POST',
