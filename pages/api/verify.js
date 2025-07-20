@@ -1,5 +1,5 @@
 import clientPromise from '../../lib/mongodb';
-import { isVpn } from 'https://cdn.jsdelivr.net/gh/josephrocca/is-vpn@v0.0.2/mod.js';
+import { isVpn } from "../../lib/isVpn";
 
 const BOT_API = 'https://verify-three-rosy.vercel.app/verify';
 const SECRET_KEY = process.env.SECRET_KEY;
