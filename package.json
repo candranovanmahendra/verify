@@ -11,13 +11,14 @@
   "dependencies": {
     "formidable": "^3.5.0",
     "mongodb": "^5.8.0",
-    "next": "14.1.4",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "request-ip": "^3.3.0"
+    "next": "^14.1.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "request-ip": "^3.3.0",
+    "@fingerprintjs/fingerprintjs": "^3.3.6"
   },
   "devDependencies": {
-    "eslint": "8.56.0",
-    "eslint-config-next": "14.1.4"
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.1.4"
   }
 }
