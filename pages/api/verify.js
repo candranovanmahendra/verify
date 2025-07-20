@@ -7,11 +7,13 @@ export default async function handler(req, res) {
   const { token } = req.query;
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-  if (!token) return res.status(400).json({ message: '❌ Token tidak ditemukan.' });
+  if (!token) {
+    return res.status(400).json({ message: '❌ Token tidak ditemukan.' });
+  }
 
   try {
     const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB); // ganti ke nama DB kamu
+    const db = client.db(process.env.MONGODB_DB); // Ganti sesuai nama DB kamu
     const tokens = db.collection('referral_tokens');
 
     const tokenData = await tokens.findOne({ token });
@@ -20,27 +22,33 @@ export default async function handler(req, res) {
       return res.json({ message: '❌ Token tidak valid.' });
     }
 
+    // Jika token sudah digunakan
     if (tokenData.used) {
+      if (tokenData.valid === false) {
+        return res.json({ message: '🚫 Verifikasi sebelumnya ditolak karena IP kamu sudah dipakai.' });
+      }
       return res.json({ message: '⚠️ Token sudah digunakan sebelumnya.' });
     }
 
+    // Cek apakah IP sudah pernah dipakai verifikasi
     const sameIpUsed = await tokens.findOne({ ip, used: true });
     if (sameIpUsed) {
-      // Tandai token ini sebagai tidak valid
+      // Tandai token ini sebagai ditolak
       await tokens.updateOne(
         { token },
         {
           $set: {
+            used: true,
             valid: false,
             ip,
-            rejectedAt: new Date(),
+            rejectedAt: new Date()
           }
         }
       );
       return res.json({ message: '🚫 IP kamu sudah pernah digunakan. Verifikasi ditolak.' });
     }
 
-    // Tandai token sebagai valid & sudah digunakan
+    // Tandai token ini sebagai valid dan digunakan
     await tokens.updateOne(
       { token },
       {
@@ -48,12 +56,12 @@ export default async function handler(req, res) {
           used: true,
           valid: true,
           ip,
-          usedAt: new Date(),
+          usedAt: new Date()
         }
       }
     );
 
-    // Kirim ke bot
+    // Kirim ke bot untuk proses bonus
     await fetch(BOT_API, {
       method: 'POST',
       headers: {
